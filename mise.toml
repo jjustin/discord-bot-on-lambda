@@ -1,0 +1,7 @@
+[env]
+'_'.file = '.env'
+_.python.venv = { path = ".venv/{{os()}}_{{arch()}}", create = true }
+
+[tools]
+python = "3.13.2"
+task = "3.41.0"

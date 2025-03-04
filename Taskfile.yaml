@@ -1,0 +1,35 @@
+version: 3
+
+tasks:
+  deps:docker:
+    cmd: >
+      docker run 
+      -v "$PWD"/package:/var/task/.package
+      -v "$PWD"/requirements.txt:/var/task/requirements.txt
+      --entrypoint ""
+      "amazon/aws-lambda-python:3.12.2025.02.28.06-arm64"
+      /bin/sh -c "pwd && pip install -r requirements.txt -t .package; exit"
+
+  package:
+    desc: Package the function for deployment on AWS Lambda
+    cmds:
+      - rm -f dist/package.zip
+      - task: deps:docker
+      - mkdir -p dist
+      - pip install -r requirements.txt --target ./.package
+      - cd package && zip -r ../dist/package.zip .
+      - zip dist/package.zip lambda_function.py
+      - rm -rf .package
+    sources:
+      - requirements.txt
+      - lambda_function.py
+
+  deploy:
+    requires:
+      vars:
+        - AWS_LAMBDA_FUNCTION_NAME
+        - PUBLIC_KEY
+    cmds:
+      - task: package
+      - aws lambda update-function-code --function-name {{.AWS_LAMBDA_FUNCTION_NAME}} --zip-file fileb://dist/package.zip
+      - "aws lambda update-function-configuration --function-name {{.AWS_LAMBDA_FUNCTION_NAME}} --environment Variables={PUBLIC_KEY={{.PUBLIC_KEY}}}"

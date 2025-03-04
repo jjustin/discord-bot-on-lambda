@@ -1,0 +1,9 @@
+.env
+package.zip
+.DS_Store
+
+.task
+.venv
+.vscode
+dist
+package
